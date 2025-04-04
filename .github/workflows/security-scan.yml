@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      IMAGE_NAME: flask-docker-app
+      IMAGE_NAME: flask-docker-app:latest
       TRIVY_REPORT: trivy-report.json
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
 
