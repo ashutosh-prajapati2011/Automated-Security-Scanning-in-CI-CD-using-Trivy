@@ -1,0 +1,54 @@
+name: Docker Image Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  trivy-scan:
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: flask-docker-app
+      TRIVY_REPORT: trivy-report.json
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: docker build -t $IMAGE_NAME .
+
+    - name: Install Trivy
+      run: |
+        sudo apt-get update
+        sudo apt-get install wget -y
+        wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.1_Linux-64bit.deb
+        sudo dpkg -i trivy_0.50.1_Linux-64bit.deb
+
+    - name: Run Trivy Scan
+      id: trivy
+      run: |
+        set +e
+        trivy image --exit-code 1 --severity HIGH,CRITICAL \
+        --format json -o $TRIVY_REPORT $IMAGE_NAME
+        echo "scan_status=$?" >> $GITHUB_OUTPUT
+        set -e
+
+    - name: Upload Trivy Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: Trivy Report
+        path: ${{ env.TRIVY_REPORT }}
+
+    - name: Send Slack Notification if Vulnerabilities Found
+      if: steps.trivy.outputs.scan_status != '0'
+      run: |
+        curl -X POST -H 'Content-type: application/json' \
+        --data '{"text":"🚨 *Trivy Scan Failed!* HIGH/CRITICAL vulnerabilities found in Docker image: `${{ env.IMAGE_NAME }}`"}' \
+        $SLACK_WEBHOOK
