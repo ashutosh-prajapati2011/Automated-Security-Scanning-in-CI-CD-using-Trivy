@@ -28,8 +28,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install wget -y
-        wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.1_Linux-64bit.deb
-        sudo dpkg -i trivy_0.50.1_Linux-64bit.deb
+        wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_v0.61.0_Linux-64bit.deb
+        sudo dpkg -i trivy_v0.61.0_Linux-64bit.deb
 
     - name: Run Trivy Scan
       id: trivy
